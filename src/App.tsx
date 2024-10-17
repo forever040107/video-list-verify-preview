@@ -99,6 +99,8 @@ function App() {
     return <div>Unable to authenticate. Please try again later.</div>
   }
 
+  console.log('Logged in as:')
+
   return (
     <VideoReviewListPage accessToken={accessToken} currentUser={currentUser} />
   )
