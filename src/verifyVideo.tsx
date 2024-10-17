@@ -28,6 +28,7 @@ const VideoReviewComponent: React.FC<VideoReviewComponentProps> = ({
   )
   const [isLoading, setIsLoading] = useState(false)
   const [updateComplete, setUpdateComplete] = useState(false)
+  const [videoUrl, setVideoUrl] = useState(webVttUrl ?? '')
 
   const handleStatusChange = async (newStatus: number) => {
     if (!accessToken) {
@@ -86,7 +87,36 @@ const VideoReviewComponent: React.FC<VideoReviewComponentProps> = ({
     }
   }
 
+  const fetchVideoUrl = async () => {
+    if (!accessToken) {
+      console.error('No access token available')
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `https://admin-jimei-stg.itdog.tw/admin-api/v1/post?protectionLv=2&dateRangeType=1&reviewStatus=1&id=${postID}&current=1&pageSize=20`,
+
+        {
+          headers: {
+            authcat: `Bearer ${accessToken}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch video info')
+      }
+
+      const data = await response.json()
+      setVideoUrl(data.data[0].webVttUrl)
+    } catch (error) {
+      console.error('Error fetching video info:', error)
+    }
+  }
+
   const openVideo = () => {
+    // fetchVideoUrl()
     if (webVttUrl && webVttUrl != '') {
       const width = 375
       const height = 667
@@ -155,7 +185,7 @@ const VideoReviewComponent: React.FC<VideoReviewComponentProps> = ({
     <div key={postID} className="w-full max-w-md mx-auto">
       <div className="p-4 space-y-4">
         <div
-          className="aspect-video relative cursor-pointer"
+          className="aspect-[9/16] relative cursor-pointer"
           onClick={openVideo}
           title="Click to play video">
           {coverUrl ? (
@@ -170,16 +200,18 @@ const VideoReviewComponent: React.FC<VideoReviewComponentProps> = ({
             </div>
           )}
           <div className="absolute inset-0 flex items-center justify-center">
-            <svg
-              className="w-12 h-12 text-white opacity-80"
-              fill="currentColor"
-              viewBox="0 0 20 20">
-              <path
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                clipRule="evenodd"
-                fillRule="evenodd"
-              />
-            </svg>
+            <div className="bg-black bg-opacity-50 rounded-full p-3">
+              <svg
+                className="w-8 h-8 text-white"
+                fill="currentColor"
+                viewBox="0 0 20 20">
+                <path
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                  clipRule="evenodd"
+                  fillRule="evenodd"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 

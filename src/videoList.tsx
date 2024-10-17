@@ -18,13 +18,13 @@ const VideoReviewListPage: React.FC<VideoReviewListPageProps> = ({
   accessToken,
   currentUser,
 }) => {
+  let pageSize = 20
   const fetchedRef = useRef(false)
   const [videos, setVideos] = useState<VideoData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
-  let pageSize = 20
+  const [currentPage, setCurrentPage] = useState(1)
 
   const fetchVideoData = useCallback(async () => {
     if (fetchedRef.current) return
@@ -50,6 +50,11 @@ const VideoReviewListPage: React.FC<VideoReviewListPageProps> = ({
       const data = await response.json()
       setVideos(data.data || [])
       setTotalItems(data.pageResult.total || 0)
+      const randomPage =
+        Math.floor(
+          Math.random() * Math.ceil(data.pageResult.total / pageSize)
+        ) + 1
+      setCurrentPage(randomPage)
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         setError(err instanceof Error ? err.message : 'An error occurred')
@@ -91,32 +96,42 @@ const VideoReviewListPage: React.FC<VideoReviewListPageProps> = ({
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-1 sm:p-4">
       <div className="sticky top-0 bg-white z-10">
-        <div className="py-3 px-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-red-600">
-            尚未审核视频总数：{totalItems}
+        <div className="py-2 px-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-red-600 order-1">
+            尚未审核视频：
+            <span className="text-xl sm:text-2xl md:text-3xl">
+              {totalItems}
+            </span>
           </h1>
-          {/* 顯示目前登入帳號資訊 */}
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-semibold text-yellow-600">
-              Logged in as: {currentUser}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-sm sm:text-base order-3 sm:order-2 w-full sm:w-auto">
+            <span className="font-semibold text-yellow-600">
+              Logged in as: <span className="font-normal">{currentUser}</span>
+            </span>
+            <span className="font-semibold text-blue-600">
+              Current Page is:{' '}
+              <span className="font-normal">{currentPage}</span>
             </span>
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {videos.map((video) => (
-          <VideoReviewComponent
-            key={video.id}
-            accessToken={accessToken}
-            webVttUrl={formatWebVttUrl(video.webVttUrl)}
-            coverUrl={video.coverUrl}
-            videoInfo={video.content}
-            memberID={video.creatorID}
-            postID={video.id}
-          />
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {/* 檢查webVttUrl是否為空字串，如果是的話就不顯示該筆資料
+      使用filter來過濾掉空字串的資料 */}
+        {videos
+          .filter((video) => video.webVttUrl !== '')
+          .map((video) => (
+            <VideoReviewComponent
+              key={video.id}
+              accessToken={accessToken}
+              webVttUrl={formatWebVttUrl(video.webVttUrl)}
+              coverUrl={video.coverUrl}
+              videoInfo={video.content}
+              memberID={video.creatorID}
+              postID={video.id}
+            />
+          ))}
       </div>
       <div className="mt-4 flex justify-center items-center space-x-2">
         <button
@@ -125,7 +140,7 @@ const VideoReviewListPage: React.FC<VideoReviewListPageProps> = ({
           className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300">
           Previous
         </button>
-        <span>{`Page ${currentPage} of ${totalPages}`}</span>
+        <span>{`Random Page ${currentPage} of ${totalPages}`}</span>
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
@@ -133,12 +148,12 @@ const VideoReviewListPage: React.FC<VideoReviewListPageProps> = ({
           Next
         </button>
         {/* 加入一個前往最後一頁的按鈕 */}
-        <button
+        {/* <button
           onClick={() => handlePageChange(totalPages)}
           disabled={currentPage === totalPages}
           className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300">
           Go to Last
-        </button>
+        </button> */}
       </div>
     </div>
   )
